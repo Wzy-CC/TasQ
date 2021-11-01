@@ -1,2 +1,47 @@
-# TaskQ
-TaskQ is a lightweight asynchronous task queue by Golang
+# TasQ
+TasQ is a lightweight asynchronous task queue by Golang
+
+golang异步任务队列设计文档/实现提纲
+需求/目标
+1. 超轻量级
+2. 多消费者和多生产者
+3. 任务回调机制
+4. 调度机制：抢占式调度和优先级
+5. 支持多种broker，方便插拔
+6. 重试机制，自定义参数进行重试
+7. 任务记时
+8. 可自定义配置文件，例如重试次数，重试时间，消费者生产者个数，任务处理快慢，任务最大上限。。。
+9. 应该提供出抽象接口进行解耦，防止侵入太深
+10. 持久化任务运行结果，日志系统
+11. 支持多种序列化方案进行序列化
+12. 并发安全/高并发
+13. 分布式
+14. 其他定制化
+
+调研：
+目前流行的golang异步任务队列：
+
+设计：
+异步任务队列的流程：
+生产者发布任务 —— broker —— 消费者竞争任务，进行消费 —— 确认消费成功，保存结果/消费失败， 重新执行任务（重新发送任务还是同一个任务进行重复执行？
+
+实现细节：
+broker应当是一个接口，任何实现broker接口的可以：
+
+参考资料
+1. 使用Go语言实现一个异步任务框架 - Jiajun的编程随想
+2. Golang 分布式异步任务队列 Machinery 教程 | 码农网
+
+目前支持：
+redis：
+redis-cluster集群版，redis单机版
+
+mongo:
+mongo-driver
+
+mysql:
+
+主流消息队列：
+dd
+
+
