@@ -28,10 +28,7 @@ golang异步任务队列设计文档/实现提纲
 实现细节：
 broker应当是一个接口，任何实现broker接口的可以：
 
-参考资料
-1. 使用Go语言实现一个异步任务框架 - Jiajun的编程随想
-2. Golang 分布式异步任务队列 Machinery 教程 | 码农网
-
+// 草稿
 目前支持：
 redis：
 redis-cluster集群版，redis单机版
