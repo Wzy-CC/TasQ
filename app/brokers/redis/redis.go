@@ -1,56 +1,69 @@
 package redis
 
 import (
-	"encoding/json"
+	"context"
 	"log"
 	"time"
 
+	redis "github.com/go-redis/redis/v8"
+
+	"TasQ/app/serializers"
 	"TasQ/app/tasks"
 )
 
-// support redis cluster mod
-type RedisClusterBroker struct{}
+// support redis cluster mod with custom serializer
+type RedisClusterBroker struct {
+	sz     serializers.Serializer
+	client *redis.ClusterClient
+	ttl    int // expire time
+}
 
 func (rc *RedisClusterBroker) Acquire(queueName string) *tasks.TasQ {
-	task := tasks.TasQ{}
-	vs, err := rc.BRPop(time.Duration(0), genQueueName(queueName)).Result()
+	var err error
+
+	var vs []string
+	vs, err = rc.client.BRPop(context.TODO(), time.Duration(0), queueName).Result()
 	if err != nil {
 		log.Panicf("failed to get task from redis: %s", err)
-		return nil // never executed
+		return nil
 	}
 	v := []byte(vs[1])
 
-	if err := json.Unmarshal(v, &task); err != nil {
-		log.Panicf("failed to get task from redis: %s", err)
-		return nil // never executed
+	task := tasks.TasQ{}
+	if err = rc.sz.Deserialize(v, &task); err != nil {
+		log.Panicf("failed to get tasq from redis cluster: %s", err)
+		return nil
 	}
 
 	return &task
 }
 
-func (rc *RedisClusterBroker) Enqueue(task *tasks.TasQ) string {
-	taskBytes, err := json.Marshal(task)
+func (rc *RedisClusterBroker) Enqueue(tasq *tasks.TasQ) string {
+	tasqBytes, err := rc.sz.Serialize(tasq)
 	if err != nil {
-		log.Panicf("failed to enquue task %+v: %s", task, err)
-		return "" // never executed here
+		log.Panicf("failed to enqueue task %+v: %s", tasq, err)
+		return ""
 	}
 
-	rc.Set(genTaskName(task.ID), taskBytes, time.Duration(r.TaskTTL)*time.Second)
-	rc.LPush(genQueueName(task.QueueName), taskBytes)
-	return task.ID
+	rc.client.Set(context.TODO(), tasq.ID, tasqBytes, time.Duration(rc.ttl)*time.Second)
+	rc.client.LPush(context.TODO(), tasq.OwnerQueue, tasqBytes)
+	return tasq.ID
 }
 
-func (rc *RedisClusterBroker) Update(task *tasks.TasQ) {
-	task.UpdatedAt = time.Now()
-	taskBytes, err := json.Marshal(task)
+func (rc *RedisClusterBroker) Update(tasq *tasks.TasQ) {
+	var err error
+	tasq.UpdatedAt = time.Now() // update tasQ time
+
+	var tasqBytes []byte
+	tasqBytes, err = rc.sz.Serialize(tasq)
 	if err != nil {
-		log.Panicf("failed to enquue task %+v: %s", task, err)
-		return // never executed here
+		log.Panicf("failed to update tasq %+v: %s", tasq, err)
+		return
 	}
-	rc.Set(genTaskName(task.ID), taskBytes, time.Duration(r.TaskTTL)*time.Second)
+	rc.client.Set(context.TODO(), tasq.ID, tasqBytes, time.Duration(rc.ttl)*time.Second).Err()
 }
 
-func (rc *RedisClusterBroker) Cancel(task *tasks.TasQ) {
-	// redis doesn't support ACK
-	return true
+func (rc *RedisClusterBroker) Cancel(tasq *tasks.TasQ) {
+	// todo add cancel function
+	return
 }

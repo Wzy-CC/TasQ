@@ -3,14 +3,15 @@ package tasks
 import "time"
 
 type TasQ struct {
-	ID        string    `json:"task_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-
-	QueueName           string  `json:"queue_name"`
-	JobName             string  `json:"job_name"`
-	ArgsMap             ArgsMap `json:"args_map"`
-	CurrentHandlerIndex int     `json:"current_handler_index"`
-	OriginalArgsMap     ArgsMap `json:"original_args_map"`
-	ResultLog           string  `json:"result_log"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Status     int       `json:"status"`
+	Result     string    `json:"result"`
+	OwnerQueue string    `json:"owner_queue"`
+	ArgsMap    ArgsMap   `json:"args_map"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	DeletedAt  time.Time `json:"deleted_at"`
 }
+
+type ArgsMap map[string]interface{}
