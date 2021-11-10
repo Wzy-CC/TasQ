@@ -4,6 +4,7 @@ TasQ is a lightweight asynchronous task queue by Golang
 golang异步任务队列设计文档/实现提纲
 需求/目标
 1. 超轻量级
+2. 超长任务的管理控制
 2. 多消费者和多生产者
 3. 任务回调机制
 4. 调度机制：抢占式调度和优先级
